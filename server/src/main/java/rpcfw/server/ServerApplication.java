@@ -12,6 +12,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.*;
 import rpcfw.core.*;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Map;
+
 /**
  * Created by fuwei on 2021/8/3.
  */
@@ -26,13 +31,18 @@ public class ServerApplication implements ApplicationContextAware {
     private ApplicationContext applicationContext;
 
     @PostMapping("/")
-    public RpcResponse invoke(@RequestBody RpcRequest request) {
-        UserService userService = (UserService) applicationContext.getBean(request.getServiceClass());
-        User user = userService.findById((Integer) request.getParams()[0]);
-        return new RpcResponse(JSON.toJSONString(user, SerializerFeature.WriteClassName));
+    public RpcResponse invoke(@RequestBody RpcRequest request) throws ClassNotFoundException, InvocationTargetException, IllegalAccessException {
+        Class<?> aClass = Class.forName(request.getServiceClass());
+        Map<String, ?> beansOfType = applicationContext.getBeansOfType(aClass);
+        Object o = beansOfType.values().toArray()[0];
+        Method requestMethod = Arrays.stream(aClass.getMethods()).filter(method -> method.getName().equals(request.getMethod())).findFirst().get();
+        Object result = requestMethod.invoke(o, request.getParams());
+        RpcResponse rpcResponse = new RpcResponse(JSON.toJSONString(result, SerializerFeature.WriteClassName));
+        log.info(">>>{}", JSON.toJSONString(rpcResponse));
+        return rpcResponse;
     }
 
-    @Bean(name = "rpcfw.core.UserService")
+    @Bean
     public UserService createUserService() {
         return new UserServiceImpl();
     }
