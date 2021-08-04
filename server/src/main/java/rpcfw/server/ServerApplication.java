@@ -8,9 +8,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.*;
-import rpcfw.core.*;
+import rpcfw.core.RpcRequest;
+import rpcfw.core.RpcResponse;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -40,11 +40,6 @@ public class ServerApplication implements ApplicationContextAware {
         RpcResponse rpcResponse = new RpcResponse(JSON.toJSONString(result, SerializerFeature.WriteClassName));
         log.info(">>>{}", JSON.toJSONString(rpcResponse));
         return rpcResponse;
-    }
-
-    @Bean
-    public UserService createUserService() {
-        return new UserServiceImpl();
     }
 
     @Override
